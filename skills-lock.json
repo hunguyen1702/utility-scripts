@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "notion-api": {
+      "source": "intellectronica/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/notion-api/SKILL.md",
+      "computedHash": "aa73210fcc5a4f075f53983d5d7ddfeb1fe46fa789998bf265b86cad6ec14d2e"
+    },
+    "slack": {
+      "source": "vercel-labs/emulate",
+      "sourceType": "github",
+      "skillPath": "skills/slack/SKILL.md",
+      "computedHash": "b731bfcc2b50a7083b8258908bf320a42f07b16d5afa09b88b28b5581cbc085b"
+    }
+  }
+}
