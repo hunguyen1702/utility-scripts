@@ -1,11 +1,13 @@
 """Upload an image to a Slack channel or thread.
 
-Uses the modern 2-step external upload flow. Works against real Slack by
-default; set SLACK_API_URL (or pass --api-url) to point at a local Slack
-emulator such as the one from the vercel-labs/emulate skill. The local
-emulator does not implement files.getUploadURLExternal, so emulator runs
-will fail at step 1 with a clear error from the server.
+Implements Slack's modern 2-step external upload flow. Works against real
+Slack by default; set SLACK_API_URL (or pass --api-url) to point at a
+local Slack emulator such as the one from the vercel-labs/emulate skill.
+The local emulator does not implement files.getUploadURLExternal, so
+emulator runs will fail at step 1 with a clear server error.
 """
+
+from __future__ import annotations
 
 import argparse
 import mimetypes
@@ -16,17 +18,16 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-import env  # noqa: F401  -- loads .env from project root
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 EPILOG = """\
 examples:
   # Post to a channel
-  python slack_upload_image.py --image shot.png --channel C0123 --caption "Latest"
+  utility-scripts-cli slack upload-image --image shot.png --channel C0123 --caption "Latest"
 
   # Reply in a thread
-  python slack_upload_image.py --image shot.png --channel C0123 --thread-ts 1717000000.000200
+  utility-scripts-cli slack upload-image --image shot.png --channel C0123 --thread-ts 1717000000.000200
 
 env vars:
   SLACK_BOT_TOKEN   Bot user OAuth token (required, needs files:write scope)
@@ -36,7 +37,7 @@ env vars:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="slack_upload_image.py",
+        prog="utility-scripts-cli slack upload-image",
         description="Upload an image to a Slack channel or thread reply.",
         epilog=EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -59,7 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def resolve_token() -> str:
+def _resolve_token() -> str:
     token = os.environ.get("SLACK_BOT_TOKEN")
     if not token:
         print("Error: SLACK_BOT_TOKEN env var is required.", file=sys.stderr)
@@ -67,7 +68,7 @@ def resolve_token() -> str:
     return token
 
 
-def validate_image(path_arg: str) -> tuple[str, int, str, bytes]:
+def _validate_image(path_arg: str) -> tuple[str, int, str, bytes]:
     path = os.path.abspath(path_arg)
     if not os.path.isfile(path):
         print(f"Error: file not found: {path}", file=sys.stderr)
@@ -78,12 +79,12 @@ def validate_image(path_arg: str) -> tuple[str, int, str, bytes]:
     return path, length, filename, data
 
 
-def guess_content_type(filename: str) -> str:
+def _guess_content_type(filename: str) -> str:
     mime, _ = mimetypes.guess_type(filename)
     return mime or "application/octet-stream"
 
 
-def step_get_upload_url(client: WebClient, filename: str, length: int) -> tuple[str, str]:
+def _step_get_upload_url(client: WebClient, filename: str, length: int) -> tuple[str, str]:
     resp = client.files_getUploadURLExternal(filename=filename, length=length)
     if not resp.get("ok", True):
         err = resp.get("error", "unknown_error")
@@ -92,7 +93,7 @@ def step_get_upload_url(client: WebClient, filename: str, length: int) -> tuple[
     return resp["upload_url"], resp["file_id"]
 
 
-def step_put_bytes(upload_url: str, data: bytes, content_type: str) -> None:
+def _step_put_bytes(upload_url: str, data: bytes, content_type: str) -> None:
     url = upload_url
     for _ in range(2):  # original URL + at most one redirect hop
         req = urllib.request.Request(
@@ -122,7 +123,7 @@ def step_put_bytes(upload_url: str, data: bytes, content_type: str) -> None:
     sys.exit(1)
 
 
-def step_complete_upload(
+def _step_complete_upload(
     client: WebClient,
     file_id: str,
     title: str,
@@ -148,14 +149,13 @@ def step_complete_upload(
     return resp
 
 
-def main() -> int:
-    args = build_parser().parse_args()
-    token = resolve_token()
-    path, length, default_filename, data = validate_image(args.image)
+def _do_upload(args: argparse.Namespace) -> int:
+    _path, length, default_filename, data = _validate_image(args.image)
+    token = _resolve_token()
 
     filename = args.filename or default_filename
     title = args.title or default_filename
-    content_type = guess_content_type(filename)
+    content_type = _guess_content_type(filename)
 
     api_url = args.api_url or os.environ.get("SLACK_API_URL")
     if api_url:
@@ -164,9 +164,9 @@ def main() -> int:
     else:
         client = WebClient(token=token)
 
-    upload_url, file_id = step_get_upload_url(client, filename, length)
-    step_put_bytes(upload_url, data, content_type)
-    resp = step_complete_upload(
+    upload_url, file_id = _step_get_upload_url(client, filename, length)
+    _step_put_bytes(upload_url, data, content_type)
+    resp = _step_complete_upload(
         client, file_id, title, args.channel, args.thread_ts, args.caption
     )
 
@@ -181,5 +181,7 @@ def main() -> int:
     return 0
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+def main(argv: list) -> int:
+    """Dispatcher entrypoint. argv is the args after the verb."""
+    args = build_parser().parse_args(argv)
+    return _do_upload(args)

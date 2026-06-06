@@ -4,19 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project intent
 
-A collection of personal utility scripts for productivity and common workflows (e.g., sending files to Slack, taking actions on Notion, etc.). Scripts are written in **Python** and the project uses **mise** for toolchain/version management.
+A collection of personal utility scripts for productivity and common workflows (e.g., sending files to Slack, taking actions on Notion, etc.). The repo produces a single installable CLI, `utility-scripts-cli`, written in **Python**. The project uses **mise** for toolchain/version management and ships a POSIX `sh` online installer.
 
 ## Toolchain
 
 - **Language**: Python (version pinned via `mise`)
-- **Version manager**: `mise` — use `mise` tasks / `.mise.toml` rather than ad-hoc Python invocations
+- **Version manager**: `mise` — use `mise` tasks / `mise.toml` rather than ad-hoc Python invocations
 - Run `mise install` after cloning to provision the pinned toolchain
 
-## Conventions for new scripts
+## Conventions for new commands
 
-- One script per workflow at the repo root (or a short subdirectory). Each script must support `--help`.
-- Register a `mise` task in `mise.toml` so it runs via `mise run <name>` as well as `python <script>.py`.
-- Load secrets from `.env` by adding `import env  # noqa: F401` at the top of the script. `env.py` is the shared loader; shell-exported vars win over `.env`.
+- One module per verb under `utility_scripts_cli/commands/<group>_<verb>.py`. Each module exposes a `main(argv: list) -> int` function. Register it in `COMMANDS` in `utility_scripts_cli/cli.py`.
+- The CLI's argparse is the single user-facing parser for a verb — add a `--help` that documents the verb's flags.
+- Configuration: read secrets from the environment first; fall back to `$XDG_CONFIG_HOME/utility-scripts-cli/.env` (or `~/.config/utility-scripts-cli/.env`). The loader is in `utility_scripts_cli/env.py` and is called once at the top of `cli.main()`. Do not re-load it inside a command.
 - Pin new Python deps in `requirements.txt` (this repo does not use `pyproject.toml`).
 - Never hard-code tokens — `.env` is git-ignored; commit `.env.example` instead.
 
@@ -25,16 +25,29 @@ A collection of personal utility scripts for productivity and common workflows (
 ```bash
 mise install                                          # provision pinned Python
 mise run install                                      # pip install -r requirements.txt
-mise run slack-upload-image -- --image <path> --channel <id>   # see script --help
+mise run cli -- --help                                # run the in-repo dispatcher
+mise run cli -- slack upload-image --image <p> --channel <id>
+mise run cli-install                                  # run install.sh --yes locally
+```
+
+For installed users:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hunguyen1702/utility-scripts/main/install.sh | sh -s -- --yes
+utility-scripts-cli slack upload-image --image <path> --channel <id>
 ```
 
 ## Architecture
 
-- `env.py` — shared `.env` loader; every script imports it as `import env  # noqa: F401`.
-- `slack_upload_image.py` — uploads an image to a Slack channel or DM via the 2-step external upload flow.
+- `bin/utility-scripts-cli` — entry script invoked by the shim at `~/.local/bin/utility-scripts-cli`. Imports `utility_scripts_cli.cli.main`.
+- `utility_scripts_cli/cli.py` — top-level dispatcher: parses `<group> <verb> [args...]` and routes to the right command module.
+- `utility_scripts_cli/env.py` — XDG-aware `.env` loader for installed users.
+- `utility_scripts_cli/commands/slack_upload_image.py` — Slack 2-step external upload (the only verb today).
+- `install.sh` — POSIX sh installer; downloads the package + `requirements.txt` from raw GitHub, creates a venv at `~/.local/share/utility-scripts-cli/venv`, and writes the shim at `~/.local/bin/utility-scripts-cli`.
+- `uninstall.sh` / `install.sh --uninstall` — remove the shim and the share dir.
 - `mise.toml` — toolchain pin and task runner entrypoints.
 
-Keep this section current when adding a new script or shared helper.
+Keep this section current when adding a new command or shared helper.
 
 ## Documentation resources
 

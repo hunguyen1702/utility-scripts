@@ -4,5 +4,15 @@ python = "3.10"
 [tasks.install]
 run = "pip install -r requirements.txt"
 
-[tasks.slack-upload-image]
-run = "python slack_upload_image.py \"$@\""
+# Run the installer in dev mode: it installs to ~/.local exactly like the
+# online installer, so `mise run cli-install` is the local equivalent of
+# `curl ... | sh -s -- --yes`. Useful for iterating on install.sh without
+# pushing to GitHub first.
+[tasks.cli-install]
+run = "sh ./install.sh --yes"
+
+# Run the in-repo dispatcher without installing. Lets you iterate on
+# bin/ and utility_scripts_cli/ with `mise run cli -- slack upload-image --help`
+# and see changes immediately.
+[tasks.cli]
+run = "PYTHONPATH=. python bin/utility-scripts-cli"

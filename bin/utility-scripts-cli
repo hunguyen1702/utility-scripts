@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+"""Entry point for the installed utility-scripts-cli.
+
+Invoked by the shell shim at ~/.local/bin/utility-scripts-cli using the
+venv's Python. The shim sets PYTHONPATH so this directory's parent is
+importable, so the package shipped next to this file is reachable.
+"""
+
+import sys
+
+from utility_scripts_cli.cli import main
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
