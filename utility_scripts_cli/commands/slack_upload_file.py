@@ -1,10 +1,14 @@
-"""Upload an image to a Slack channel or thread.
+"""Upload a file to a Slack channel or thread.
 
 Implements Slack's modern 2-step external upload flow. Works against real
 Slack by default; set SLACK_API_URL (or pass --api-url) to point at a
 local Slack emulator such as the one from the vercel-labs/emulate skill.
 The local emulator does not implement files.getUploadURLExternal, so
 emulator runs will fail at step 1 with a clear server error.
+
+The upload flow is content-type agnostic: images, PDFs, logs, CSVs, and
+any other file types all go through the same path. The legacy --image
+flag is kept as a hidden alias for --file so older callers keep working.
 """
 
 from __future__ import annotations
@@ -23,11 +27,14 @@ from slack_sdk.errors import SlackApiError
 
 EPILOG = """\
 examples:
-  # Post to a channel
-  utility-scripts-cli slack upload-image --image shot.png --channel C0123 --caption "Latest"
+  # Post a file to a channel
+  utility-scripts-cli slack upload-file --file report.pdf --channel C0123 --caption "Q2 report"
+
+  # Post an image (any file type works the same way)
+  utility-scripts-cli slack upload-file --file shot.png --channel C0123 --caption "Latest"
 
   # Reply in a thread
-  utility-scripts-cli slack upload-image --image shot.png --channel C0123 --thread-ts 1717000000.000200
+  utility-scripts-cli slack upload-file --file shot.png --channel C0123 --thread-ts 1717000000.000200
 
 env vars:
   SLACK_BOT_TOKEN   Bot user OAuth token (required, needs files:write scope)
@@ -37,12 +44,15 @@ env vars:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="utility-scripts-cli slack upload-image",
-        description="Upload an image to a Slack channel or thread reply.",
+        prog="utility-scripts-cli slack upload-file",
+        description="Upload a file (image, PDF, log, …) to a Slack channel or thread reply.",
         epilog=EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    p.add_argument("--image", required=True, help="Path to the image file to upload")
+    p.add_argument("--file", dest="file", default=None, help="Path to the file to upload")
+    # Backcompat alias for the original upload-image verb. Hidden from --help
+    # so the documented surface is just --file, but old scripts/skills keep working.
+    p.add_argument("--image", dest="image", default=None, help=argparse.SUPPRESS)
     p.add_argument("--channel", required=True, help="Channel ID (C…) or name (#… or name)")
     p.add_argument("--thread-ts", default=None, help="Reply into a thread with this parent ts")
     p.add_argument("--caption", default=None, help="Initial comment posted alongside the file")
@@ -50,7 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--filename",
         default=None,
-        help="Filename sent to Slack (defaults to the basename of --image)",
+        help="Filename sent to Slack (defaults to the basename of --file)",
     )
     p.add_argument(
         "--api-url",
@@ -58,6 +68,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Override SLACK_API_URL for this run (advanced; usually not needed)",
     )
     return p
+
+
+def _resolve_source_path(args: argparse.Namespace) -> str:
+    if args.file and args.image:
+        print("Error: pass --file (preferred) or --image, not both.", file=sys.stderr)
+        sys.exit(2)
+    path = args.file or args.image
+    if not path:
+        print("Error: --file is required.", file=sys.stderr)
+        sys.exit(2)
+    return path
 
 
 def _resolve_token() -> str:
@@ -68,7 +89,7 @@ def _resolve_token() -> str:
     return token
 
 
-def _validate_image(path_arg: str) -> tuple[str, int, str, bytes]:
+def _validate_file(path_arg: str) -> tuple[str, int, str, bytes]:
     path = os.path.abspath(path_arg)
     if not os.path.isfile(path):
         print(f"Error: file not found: {path}", file=sys.stderr)
@@ -150,7 +171,8 @@ def _step_complete_upload(
 
 
 def _do_upload(args: argparse.Namespace) -> int:
-    _path, length, default_filename, data = _validate_image(args.image)
+    source_path = _resolve_source_path(args)
+    _path, length, default_filename, data = _validate_file(source_path)
     token = _resolve_token()
 
     filename = args.filename or default_filename

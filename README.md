@@ -43,11 +43,11 @@ chmod 600 ~/.config/utility-scripts-cli/.env
 ```bash
 utility-scripts-cli --help
 utility-scripts-cli slack --help
-utility-scripts-cli slack upload-image --help
-utility-scripts-cli slack upload-image --image /abs/shot.png --channel C0123 --caption "Latest"
+utility-scripts-cli slack upload-file --help
+utility-scripts-cli slack upload-file --file /abs/shot.png --channel C0123 --caption "Latest"
 ```
 
-For full flag list, run `utility-scripts-cli slack upload-image --help`.
+For full flag list, run `utility-scripts-cli slack upload-file --help`. The legacy verb `slack upload-image` (with `--image`) is kept as a backwards-compatible alias.
 
 ## Requirements
 
@@ -65,7 +65,7 @@ mise run cli -- --help        # run the in-repo dispatcher
 mise run cli-install          # run install.sh --yes locally (same as the online installer)
 ```
 
-See `skills/` for agent-facing entry points (e.g. `slack-upload-image`).
+See `skills/` for agent-facing entry points (e.g. `slack-upload-file`).
 
 ## Layout
 
@@ -75,7 +75,7 @@ utility_scripts_cli/            Installable Python package
   cli.py                        Dispatcher (group → verb → command)
   env.py                        XDG-aware .env loader
   commands/                     One module per verb
-    slack_upload_image.py       Slack 2-step external upload
+    slack_upload_file.py        Slack 2-step external upload
 install.sh                      POSIX sh online installer (curl|sh-friendly)
 uninstall.sh                    POSIX sh uninstaller
 mise.toml                       Toolchain pin + task runner entrypoints
@@ -88,4 +88,4 @@ skills/                         Agent-facing skill definitions
 ## See also
 
 - `CLAUDE.md` — agent-facing project notes and the Slack upload gotchas (silent-failure modes: `POST` vs `PUT`, `channel_id` must be a resolved channel/user/DM ID, etc.).
-- `skills/slack-upload-image/SKILL.md` — the agent skill that drives the `slack upload-image` subcommand.
+- `skills/slack-upload-file/SKILL.md` — the agent skill that drives the `slack upload-file` subcommand.

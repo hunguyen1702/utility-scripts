@@ -1,18 +1,20 @@
 ---
-name: slack-upload-image
-description: Upload an image to a Slack channel or thread using the installed `utility-scripts-cli` tool. Use this skill whenever the user wants to send, post, share, or attach an image/file to Slack — including screenshots, charts, photos, design mocks, logs, or any other image asset. Triggers on phrases like "upload this to Slack", "send to #channel", "post this screenshot to Slack", "share in thread", "slack it", or when the user provides an image path and a channel name/ID. Do NOT use this skill to send plain text messages, manage channels, or perform other Slack operations — only image/file upload via the 2-step external upload flow.
+name: slack-upload-file
+description: Upload a file (image, PDF, log, CSV, ZIP, design mock, screenshot, or anything else) to a Slack channel or thread using the installed `utility-scripts-cli` tool. Use this skill whenever the user wants to send, post, share, attach, or upload a file/image to Slack — including screenshots, charts, photos, design mocks, logs, reports, archives. Triggers on phrases like "upload this to Slack", "send this PDF to #channel", "post this screenshot to Slack", "share this file in thread", "slack it", "send the log to Slack", or when the user provides a file path and a channel name/ID. Do NOT use this skill to send plain text messages, manage channels, search messages, or perform other Slack operations — only file upload via the 2-step external upload flow.
 ---
 
-# slack-upload-image
+# slack-upload-file
 
-Upload an image to a Slack channel or thread by invoking `utility-scripts-cli slack upload-image`. The CLI implements Slack's modern 2-step external upload flow (`files.getUploadURLExternal` → `POST` bytes → `files.completeUploadExternal`).
+Upload any file to a Slack channel or thread by invoking `utility-scripts-cli slack upload-file`. The CLI implements Slack's modern 2-step external upload flow (`files.getUploadURLExternal` → `POST` bytes → `files.completeUploadExternal`) and is content-type agnostic — images, PDFs, logs, archives, and arbitrary binary all go through the same path.
+
+> Legacy: the verb `slack upload-image` and the flag `--image` are kept as aliases for backwards compatibility. New work should use `upload-file` / `--file`.
 
 ## When to use
 
 Use this skill when the user wants to:
-- Upload an image to a Slack channel
-- Reply with an image inside an existing thread
-- Share a screenshot, chart, mock, log, or any other image asset to Slack
+- Upload a file (image, PDF, log, CSV, ZIP, …) to a Slack channel
+- Reply with a file inside an existing thread
+- Share a screenshot, chart, mock, report, or any other asset to Slack
 
 Do not use it for plain text messages, channel management, search, or any non-upload Slack operation.
 
@@ -22,7 +24,7 @@ Before running, confirm you have:
 
 | Input | Required | Notes |
 | --- | --- | --- |
-| **Image path** | Yes | Absolute path to the file on disk. Reject obviously bad paths (non-existent, directory) before invoking. |
+| **File path** | Yes | Absolute path to the file on disk. Reject obviously bad paths (non-existent, directory) before invoking. |
 | **Channel** | Yes | Slack channel ID (`C…`, `D…`, `G…`). If the user gave a name like `#general` or a user ID (`U…`), resolve it first — see "Resolving channels" below. |
 | **Caption** (`--caption`) | No | Initial comment posted with the file. |
 | **Thread ts** (`--thread-ts`) | No | Parent message timestamp to reply in-thread. Format: `<seconds>.<microseconds>`, e.g. `1717000000.000200`. |
@@ -42,13 +44,19 @@ Do not pass `U…` IDs directly — the upload will succeed but the file won't b
 ## How to run
 
 ```bash
-utility-scripts-cli slack upload-image --image /abs/path/to/shot.png --channel C0123 --caption "Latest deploy"
+utility-scripts-cli slack upload-file --file /abs/path/to/report.pdf --channel C0123 --caption "Q2 report"
+```
+
+Images work the same way:
+
+```bash
+utility-scripts-cli slack upload-file --file /abs/path/to/shot.png --channel C0123 --caption "Latest deploy"
 ```
 
 For `--help` and the full flag list:
 
 ```bash
-utility-scripts-cli slack upload-image --help
+utility-scripts-cli slack upload-file --help
 ```
 
 ### Auto-install fallback
@@ -59,7 +67,7 @@ If `utility-scripts-cli` is not on PATH (fresh machine, brand new shell session)
 if ! command -v utility-scripts-cli >/dev/null 2>&1; then
   curl -fsSL https://raw.githubusercontent.com/hunguyen1702/utility-scripts/main/install.sh | sh -s -- --yes
 fi
-utility-scripts-cli slack upload-image --image /abs/path/to/shot.png --channel C0123
+utility-scripts-cli slack upload-file --file /abs/path/to/file.pdf --channel C0123
 ```
 
 The installer places the binary in `~/.local/bin/utility-scripts-cli` (already on `PATH` on most macOS/Linux setups). It downloads a small set of files from GitHub, creates a hermetic venv at `~/.local/share/utility-scripts-cli/venv`, and installs the deps from `requirements.txt`. It does not touch system Python or any other file on the machine.

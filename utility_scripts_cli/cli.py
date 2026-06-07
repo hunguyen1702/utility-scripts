@@ -12,16 +12,21 @@ import sys
 from typing import Callable, Dict
 
 from utility_scripts_cli import __version__
-from utility_scripts_cli.commands.slack_upload_image import main as slack_upload_image_main
+from utility_scripts_cli.commands.slack_upload_file import main as slack_upload_file_main
 from utility_scripts_cli.env import load_env
 
 # group -> {verb -> (description, runner)}
 # runner(argv_after_verb) -> exit code
 COMMANDS: Dict[str, Dict[str, tuple[str, Callable[[list], int]]]] = {
     "slack": {
+        "upload-file": (
+            "Upload a file to a Slack channel or thread.",
+            slack_upload_file_main,
+        ),
+        # Backcompat alias for the original verb. Same runner, same flags.
         "upload-image": (
-            "Upload an image to a Slack channel or thread.",
-            slack_upload_image_main,
+            "Alias for upload-file (kept for backwards compatibility).",
+            slack_upload_file_main,
         ),
     },
 }

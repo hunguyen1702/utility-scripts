@@ -15,7 +15,7 @@ req = urllib.request.Request(upload_url, data=file_bytes, method="POST",
 urllib.request.urlopen(req)
 ```
 
-`slack_upload_image.py` already does this correctly.
+`slack_upload_file.py` already does this correctly.
 
 ## 2. `channel_id` must be a resolved Slack ID
 
@@ -35,7 +35,7 @@ Then pass `dm_id` as `--channel`.
 
 ## 3. `files_completeUploadExternal` SDK method name
 
-The Python `slack-sdk` `WebClient` exposes this as `files_completeUploadExternal` (camelCase → snake_case). The Slack API field for the channel is `channel_id`, not `channel`. The `slack_upload_image.py` script already wires both correctly.
+The Python `slack-sdk` `WebClient` exposes this as `files_completeUploadExternal` (camelCase → snake_case). The Slack API field for the channel is `channel_id`, not `channel`. The `slack_upload_file.py` script already wires both correctly.
 
 ## 4. Local emulator limitations
 
