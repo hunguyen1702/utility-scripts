@@ -86,10 +86,6 @@ chmod 600 ~/.config/utility-scripts-cli/.env
 
 The CLI accepts `--api-url` (or `SLACK_API_URL` env var) to target a non-production Slack API. The local emulator from the `vercel-labs/emulate` skill does not implement `files.getUploadURLExternal`, so emulator runs will fail at step 1 with a clear server error — that's expected, not a bug in your call.
 
-## After the run
-
-The CLI prints a permalink on success. Surface that to the user so they can click through to the uploaded message.
-
 ## Debugging
 
 If the upload fails or the file uploads but doesn't appear in the channel, read [[slack-gotchas]] before debugging — the most common causes are silent and the script's `ok: true` response can be misleading.
