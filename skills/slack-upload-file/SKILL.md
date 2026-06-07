@@ -12,6 +12,7 @@ Upload any file to a Slack channel or thread by invoking `utility-scripts-cli sl
 ## When to use
 
 Use this skill when the user wants to:
+
 - Upload a file (image, PDF, log, CSV, ZIP, …) to a Slack channel
 - Reply with a file inside an existing thread
 - Share a screenshot, chart, mock, report, or any other asset to Slack
@@ -22,13 +23,13 @@ Do not use it for plain text messages, channel management, search, or any non-up
 
 Before running, confirm you have:
 
-| Input | Required | Notes |
-| --- | --- | --- |
-| **File path** | Yes | Absolute path to the file on disk. Reject obviously bad paths (non-existent, directory) before invoking. |
-| **Channel** | Yes | Slack channel ID (`C…`, `D…`, `G…`). If the user gave a name like `#general` or a user ID (`U…`), resolve it first — see "Resolving channels" below. |
-| **Caption** (`--caption`) | No | Initial comment posted with the file. |
-| **Thread ts** (`--thread-ts`) | No | Parent message timestamp to reply in-thread. Format: `<seconds>.<microseconds>`, e.g. `1717000000.000200`. |
-| **Title** (`--title`) | No | Display name in Slack. Defaults to the filename. |
+| Input                         | Required | Notes                                                                                                                                                |
+| ----------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **File path**                 | Yes      | Absolute path to the file on disk. Reject obviously bad paths (non-existent, directory) before invoking.                                             |
+| **Channel**                   | Yes      | Slack channel ID (`C…`, `D…`, `G…`). If the user gave a name like `#general` or a user ID (`U…`), resolve it first — see "Resolving channels" below. |
+| **Caption** (`--caption`)     | No       | Initial comment posted with the file.                                                                                                                |
+| **Thread ts** (`--thread-ts`) | No       | Parent message timestamp to reply in-thread. Format: `<seconds>.<microseconds>`, e.g. `1717000000.000200`.                                           |
+| **Title** (`--title`)         | No       | Display name in Slack. Defaults to the filename.                                                                                                     |
 
 If anything required is missing, ask the user — do not guess.
 
@@ -66,12 +67,6 @@ This skill assumes `utility-scripts-cli` is already installed and on `PATH` (it 
 If the user wants to install (or re-install) the CLI, point them at the README and let them run it themselves:
 
 - https://github.com/hunguyen1702/utility-scripts#online-install-recommended
-
-The one-liner they will run is:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/hunguyen1702/utility-scripts/main/install.sh | sh -s -- --yes
-```
 
 If `command -v utility-scripts-cli` returns empty when you try to run the skill, tell the user the CLI is missing and link them to the install section above — do not invoke the installer for them.
 
