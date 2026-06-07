@@ -59,18 +59,21 @@ For `--help` and the full flag list:
 utility-scripts-cli slack upload-file --help
 ```
 
-### Auto-install fallback
+### If the CLI is not installed
 
-If `utility-scripts-cli` is not on PATH (fresh machine, brand new shell session), install it before running:
+This skill assumes `utility-scripts-cli` is already installed and on `PATH` (it lives at `~/.local/bin/utility-scripts-cli` after install). Do **not** run the installer from here — the installer touches the user's filesystem (writes a venv and a shim under `~/.local/`) and is an explicit user-facing action.
+
+If the user wants to install (or re-install) the CLI, point them at the README and let them run it themselves:
+
+- https://github.com/hunguyen1702/utility-scripts#online-install-recommended
+
+The one-liner they will run is:
 
 ```bash
-if ! command -v utility-scripts-cli >/dev/null 2>&1; then
-  curl -fsSL https://raw.githubusercontent.com/hunguyen1702/utility-scripts/main/install.sh | sh -s -- --yes
-fi
-utility-scripts-cli slack upload-file --file /abs/path/to/file.pdf --channel C0123
+curl -fsSL https://raw.githubusercontent.com/hunguyen1702/utility-scripts/main/install.sh | sh -s -- --yes
 ```
 
-The installer places the binary in `~/.local/bin/utility-scripts-cli` (already on `PATH` on most macOS/Linux setups). It downloads a small set of files from GitHub, creates a hermetic venv at `~/.local/share/utility-scripts-cli/venv`, and installs the deps from `requirements.txt`. It does not touch system Python or any other file on the machine.
+If `command -v utility-scripts-cli` returns empty when you try to run the skill, tell the user the CLI is missing and link them to the install section above — do not invoke the installer for them.
 
 ## Configuration
 
