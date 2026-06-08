@@ -12,6 +12,7 @@ import sys
 from typing import Callable, Dict
 
 from utility_scripts_cli import __version__
+from utility_scripts_cli.commands.slack_post_message import main as slack_post_message_main
 from utility_scripts_cli.commands.slack_upload_file import main as slack_upload_file_main
 from utility_scripts_cli.env import load_env
 
@@ -19,6 +20,10 @@ from utility_scripts_cli.env import load_env
 # runner(argv_after_verb) -> exit code
 COMMANDS: Dict[str, Dict[str, tuple[str, Callable[[list], int]]]] = {
     "slack": {
+        "post-message": (
+            "Post a message (plain text or Block Kit) to a Slack channel or thread.",
+            slack_post_message_main,
+        ),
         "upload-file": (
             "Upload a file to a Slack channel or thread.",
             slack_upload_file_main,
