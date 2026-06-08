@@ -26,13 +26,55 @@ curl -fsSL https://raw.githubusercontent.com/hunguyen1702/utility-scripts/main/i
 
 ## Configuration
 
-`SLACK_BOT_TOKEN` is read from the environment, or from `$XDG_CONFIG_HOME/utility-scripts-cli/.env` (falling back to `~/.config/utility-scripts-cli/.env`). Shell-exported values always win over the file.
+`SLACK_BOT_TOKEN` is read from the environment, or from a profile-specific env file, or from the default XDG config file. Shell-exported values always win over files.
 
 ```bash
 mkdir -p ~/.config/utility-scripts-cli
 printf 'SLACK_BOT_TOKEN=xoxb-your-token\n' > ~/.config/utility-scripts-cli/.env
 chmod 600 ~/.config/utility-scripts-cli/.env
 ```
+
+You can also create the default file through the CLI:
+
+```bash
+utility-scripts-cli config init --token xoxb-your-token
+```
+
+For multiple agents or identities, create one profile file per token:
+
+```bash
+mkdir -p ~/.config/utility-scripts-cli/profiles
+printf 'SLACK_BOT_TOKEN=xoxb-agent-a\n' > ~/.config/utility-scripts-cli/profiles/agent-a.env
+printf 'SLACK_BOT_TOKEN=xoxb-agent-b\n' > ~/.config/utility-scripts-cli/profiles/agent-b.env
+chmod 600 ~/.config/utility-scripts-cli/profiles/*.env
+```
+
+Or initialize profile files directly:
+
+```bash
+utility-scripts-cli --profile agent-a config init --token xoxb-agent-a
+utility-scripts-cli --profile agent-b config init --token xoxb-agent-b
+```
+
+Then select a profile per invocation:
+
+```bash
+utility-scripts-cli --profile agent-a slack post-message --channel C0123 --text "hello"
+utility-scripts-cli --profile agent-b slack upload-file --file /tmp/report.txt --channel C0123
+```
+
+Or set a default profile for a process/service:
+
+```bash
+export UTILITY_SCRIPTS_PROFILE=agent-a
+utility-scripts-cli slack post-message --channel C0123 --text "hello"
+```
+
+Resolution order is:
+
+1. Existing process environment variables, such as `SLACK_BOT_TOKEN`
+2. Profile file from `--profile NAME` or `UTILITY_SCRIPTS_PROFILE`, loaded from `$XDG_CONFIG_HOME/utility-scripts-cli/profiles/NAME.env` or `~/.config/utility-scripts-cli/profiles/NAME.env`
+3. Default file at `$XDG_CONFIG_HOME/utility-scripts-cli/.env` or `~/.config/utility-scripts-cli/.env`
 
 `SLACK_API_URL` is optional — override the Slack API base URL (e.g. for the [`vercel-labs/emulate`](https://github.com/vercel-labs/emulate) local Slack emulator). You can also pass `--api-url` per invocation.
 
@@ -42,6 +84,7 @@ chmod 600 ~/.config/utility-scripts-cli/.env
 
 ```bash
 utility-scripts-cli --help
+utility-scripts-cli config init --help
 utility-scripts-cli slack --help
 utility-scripts-cli slack post-message --help
 utility-scripts-cli slack upload-file --help
@@ -63,6 +106,7 @@ If you're contributing to this repo, the dev tasks let you iterate on the CLI wi
 mise install                  # provision the pinned Python
 mise run install              # pip install -r requirements.txt (for in-repo runs)
 mise run cli -- --help        # run the in-repo dispatcher
+mise run cli -- config init --help
 mise run cli-install          # run install.sh --yes locally (same as the online installer)
 ```
 
@@ -76,6 +120,7 @@ utility_scripts_cli/            Installable Python package
   cli.py                        Dispatcher (group → verb → command)
   env.py                        XDG-aware .env loader
   commands/                     One module per verb
+    config_init.py              Create default/profile config files
     slack_post_message.py       Slack chat.postMessage helper
     slack_upload_file.py        Slack 2-step external upload
 install.sh                      POSIX sh online installer (curl|sh-friendly)

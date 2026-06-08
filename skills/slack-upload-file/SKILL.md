@@ -72,7 +72,7 @@ If `command -v utility-scripts-cli` returns empty when you try to run the skill,
 
 ## Configuration
 
-The CLI reads `SLACK_BOT_TOKEN` and `SLACK_API_URL` from the environment, or from `$XDG_CONFIG_HOME/utility-scripts-cli/.env` (falling back to `~/.config/utility-scripts-cli/.env`). Shell-exported values always win over the file.
+The CLI reads `SLACK_BOT_TOKEN` and `SLACK_API_URL` from the environment first. If `--profile` or `UTILITY_SCRIPTS_PROFILE` is set, it next loads `$XDG_CONFIG_HOME/utility-scripts-cli/profiles/<name>.env` (falling back to `~/.config/utility-scripts-cli/profiles/<name>.env`), and otherwise falls back to `$XDG_CONFIG_HOME/utility-scripts-cli/.env` (or `~/.config/utility-scripts-cli/.env`). Shell-exported values always win over files.
 
 One-time setup after install:
 
@@ -80,6 +80,26 @@ One-time setup after install:
 mkdir -p ~/.config/utility-scripts-cli
 printf 'SLACK_BOT_TOKEN=xoxb-your-token\n' > ~/.config/utility-scripts-cli/.env
 chmod 600 ~/.config/utility-scripts-cli/.env
+```
+
+Equivalent CLI setup:
+
+```bash
+utility-scripts-cli config init --token xoxb-your-token
+```
+
+For multi-agent setups, prefer profiles:
+
+```bash
+mkdir -p ~/.config/utility-scripts-cli/profiles
+printf 'SLACK_BOT_TOKEN=xoxb-agent-a\n' > ~/.config/utility-scripts-cli/profiles/agent-a.env
+utility-scripts-cli --profile agent-a slack upload-file --file /abs/shot.png --channel C0123
+```
+
+Or create the profile file through the CLI:
+
+```bash
+utility-scripts-cli --profile agent-a config init --token xoxb-agent-a
 ```
 
 ## Optional: pointing at a local Slack emulator

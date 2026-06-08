@@ -16,7 +16,7 @@ A collection of personal utility scripts for productivity and common workflows (
 
 - One module per verb under `utility_scripts_cli/commands/<group>_<verb>.py`. Each module exposes a `main(argv: list) -> int` function. Register it in `COMMANDS` in `utility_scripts_cli/cli.py`.
 - The CLI's argparse is the single user-facing parser for a verb — add a `--help` that documents the verb's flags.
-- Configuration: read secrets from the environment first; fall back to `$XDG_CONFIG_HOME/utility-scripts-cli/.env` (or `~/.config/utility-scripts-cli/.env`). The loader is in `utility_scripts_cli/env.py` and is called once at the top of `cli.main()`. Do not re-load it inside a command.
+- Configuration: read secrets from the environment first; then from a selected profile at `$XDG_CONFIG_HOME/utility-scripts-cli/profiles/<name>.env` (or `~/.config/utility-scripts-cli/profiles/<name>.env`) when `--profile` or `UTILITY_SCRIPTS_PROFILE` is set; finally fall back to `$XDG_CONFIG_HOME/utility-scripts-cli/.env` (or `~/.config/utility-scripts-cli/.env`). The loader is in `utility_scripts_cli/env.py` and is called once at the top of `cli.main()`. Do not re-load it inside a command.
 - Pin new Python deps in `requirements.txt` (this repo does not use `pyproject.toml`).
 - Never hard-code tokens — `.env` is git-ignored; commit `.env.example` instead.
 
@@ -26,6 +26,7 @@ A collection of personal utility scripts for productivity and common workflows (
 mise install                                          # provision pinned Python
 mise run install                                      # pip install -r requirements.txt
 mise run cli -- --help                                # run the in-repo dispatcher
+mise run cli -- config init --help
 mise run cli -- slack upload-file --file <p> --channel <id>
 mise run cli-install                                  # run install.sh --yes locally
 ```
@@ -42,6 +43,7 @@ utility-scripts-cli slack upload-file --file <path> --channel <id>
 - `bin/utility-scripts-cli` — entry script invoked by the shim at `~/.local/bin/utility-scripts-cli`. Imports `utility_scripts_cli.cli.main`.
 - `utility_scripts_cli/cli.py` — top-level dispatcher: parses `<group> <verb> [args...]` and routes to the right command module.
 - `utility_scripts_cli/env.py` — XDG-aware `.env` loader for installed users.
+- `utility_scripts_cli/commands/config_init.py` — Creates the default `.env` or a profile-specific config file.
 - `utility_scripts_cli/commands/slack_post_message.py` — Slack `chat.postMessage` helper for plain text or Block Kit messages.
 - `utility_scripts_cli/commands/slack_upload_file.py` — Slack 2-step external upload (file upload; the verb `upload-image` is a backcompat alias).
 - `install.sh` — POSIX sh installer; downloads the package + `requirements.txt` from raw GitHub, creates a venv at `~/.local/share/utility-scripts-cli/venv`, and writes the shim at `~/.local/bin/utility-scripts-cli`.
@@ -78,8 +80,8 @@ Both of these return `ok: true` but leave the file unshared (`channels: []`, `im
 
 ## Environment & debugging notes
 
-- **Shim runs under `/bin/sh`** (GNU bash 3.2 on macOS), not the user's interactive shell. On macOS, `set -gx VAR val` in `fish` does not always propagate to `/bin/sh` subshells reliably — for secrets the XDG `.env` file at `~/.config/utility-scripts-cli/.env` is the durable source.
-- **Claude Code's Bash tool runs in an isolated shell**, separate from the user's fish/bash session. `echo $TOKEN` from the tool will be empty even if the user has it set. To verify env loading end-to-end, ask the user to run the command in their own shell, or write a token value into the XDG `.env` file (the CLI picks it up regardless of shell).
+- **Shim runs under `/bin/sh`** (GNU bash 3.2 on macOS), not the user's interactive shell. On macOS, `set -gx VAR val` in `fish` does not always propagate to `/bin/sh` subshells reliably — for secrets the XDG config files under `~/.config/utility-scripts-cli/` are the durable source, either the default `.env` or `profiles/<name>.env` for per-agent/per-identity setups.
+- **Claude Code's Bash tool runs in an isolated shell**, separate from the user's fish/bash session. `echo $TOKEN` from the tool will be empty even if the user has it set. To verify env loading end-to-end, ask the user to run the command in their own shell, or write a token value into the XDG config file the CLI will read for that run, either the default `.env` or a selected `profiles/<name>.env`.
 - **Two distinct error modes to tell apart when upload fails:**
   - `Error: SLACK_BOT_TOKEN env var is required.` → CLI never reached Slack; env loading failed.
   - `slack_sdk.errors.SlackApiError: ... 'error': 'invalid_auth'` → CLI reached Slack with a token but the token was rejected. Check token validity/scope, not env loading.

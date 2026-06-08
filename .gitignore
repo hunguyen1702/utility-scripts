@@ -1,5 +1,6 @@
 .claude/
 .agents/
+.brv/
 .serena/
 .env
 __pycache__/
