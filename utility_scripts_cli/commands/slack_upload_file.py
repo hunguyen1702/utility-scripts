@@ -36,6 +36,10 @@ examples:
   # Reply in a thread
   utility-scripts-cli slack upload-file --file shot.png --channel C0123 --thread-ts 1717000000.000200
 
+  # Upload without sharing to the channel; print the permalink to stdout so you
+  # can post it yourself later (e.g. paste into a different message).
+  utility-scripts-cli slack upload-file --file chart.png --channel C0123 --no-share
+
 env vars:
   SLACK_BOT_TOKEN   Bot user OAuth token (required, needs files:write scope)
   SLACK_API_URL     Override Slack API base URL (e.g. http://localhost:4003/api for the emulator)
@@ -66,6 +70,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--api-url",
         default=None,
         help="Override SLACK_API_URL for this run (advanced; usually not needed)",
+    )
+    p.add_argument(
+        "--no-share",
+        action="store_true",
+        help=(
+            "Finalize the upload but do not share it to --channel. The file "
+            "stays private to the bot; the permalink is printed to stdout so "
+            "you can post it yourself later. Caption/thread-ts are ignored."
+        ),
     )
     return p
 
@@ -148,17 +161,19 @@ def _step_complete_upload(
     client: WebClient,
     file_id: str,
     title: str,
-    channel: str,
+    channel: str | None,
     thread_ts: str | None,
     initial_comment: str | None,
 ) -> dict:
+    kwargs: dict = {"files": [{"id": file_id, "title": title}]}
+    if channel is not None:
+        kwargs["channel_id"] = channel
+    if thread_ts is not None:
+        kwargs["thread_ts"] = thread_ts
+    if initial_comment is not None:
+        kwargs["initial_comment"] = initial_comment
     try:
-        resp = client.files_completeUploadExternal(
-            files=[{"id": file_id, "title": title}],
-            channel_id=channel,
-            thread_ts=thread_ts,
-            initial_comment=initial_comment,
-        )
+        resp = client.files_completeUploadExternal(**kwargs)
     except SlackApiError as e:
         err = e.response.get("error", str(e))
         print(f"Error: files.completeUploadExternal failed: {err}", file=sys.stderr)
@@ -188,9 +203,15 @@ def _do_upload(args: argparse.Namespace) -> int:
 
     upload_url, file_id = _step_get_upload_url(client, filename, length)
     _step_put_bytes(upload_url, data, content_type)
-    resp = _step_complete_upload(
-        client, file_id, title, args.channel, args.thread_ts, args.caption
-    )
+
+    if args.no_share:
+        resp = _step_complete_upload(
+            client, file_id, title, channel=None, thread_ts=None, initial_comment=None
+        )
+    else:
+        resp = _step_complete_upload(
+            client, file_id, title, args.channel, args.thread_ts, args.caption
+        )
 
     files = resp.get("files") or []
     if files:
