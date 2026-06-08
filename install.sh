@@ -129,7 +129,7 @@ fetch "bin/utility-scripts-cli" "${TMP}/utility-scripts-cli"
 for f in __init__.py __main__.py cli.py env.py; do
   fetch "utility_scripts_cli/${f}" "${TMP}/pkg_${f}"
 done
-for f in __init__.py slack_upload_file.py; do
+for f in __init__.py slack_post_message.py slack_upload_file.py; do
   fetch "utility_scripts_cli/commands/${f}" "${TMP}/cmd_${f}"
 done
 
@@ -149,6 +149,7 @@ cp "${TMP}/pkg___main__.py"     "${LIB_DIR}/utility_scripts_cli/__main__.py"
 cp "${TMP}/pkg_cli.py"          "${LIB_DIR}/utility_scripts_cli/cli.py"
 cp "${TMP}/pkg_env.py"          "${LIB_DIR}/utility_scripts_cli/env.py"
 cp "${TMP}/cmd___init__.py"     "${LIB_DIR}/utility_scripts_cli/commands/__init__.py"
+cp "${TMP}/cmd_slack_post_message.py" "${LIB_DIR}/utility_scripts_cli/commands/slack_post_message.py"
 cp "${TMP}/cmd_slack_upload_file.py" "${LIB_DIR}/utility_scripts_cli/commands/slack_upload_file.py"
 
 # --- write the shell shim -----------------------------------------------------

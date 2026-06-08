@@ -43,11 +43,12 @@ chmod 600 ~/.config/utility-scripts-cli/.env
 ```bash
 utility-scripts-cli --help
 utility-scripts-cli slack --help
+utility-scripts-cli slack post-message --help
 utility-scripts-cli slack upload-file --help
 utility-scripts-cli slack upload-file --file /abs/shot.png --channel C0123 --caption "Latest"
 ```
 
-For full flag list, run `utility-scripts-cli slack upload-file --help`. The legacy verb `slack upload-image` (with `--image`) is kept as a backwards-compatible alias.
+For full flag lists, run `utility-scripts-cli slack post-message --help` or `utility-scripts-cli slack upload-file --help`. The legacy verb `slack upload-image` (with `--image`) is kept as a backwards-compatible alias.
 
 ## Requirements
 
@@ -75,6 +76,7 @@ utility_scripts_cli/            Installable Python package
   cli.py                        Dispatcher (group → verb → command)
   env.py                        XDG-aware .env loader
   commands/                     One module per verb
+    slack_post_message.py       Slack chat.postMessage helper
     slack_upload_file.py        Slack 2-step external upload
 install.sh                      POSIX sh online installer (curl|sh-friendly)
 uninstall.sh                    POSIX sh uninstaller

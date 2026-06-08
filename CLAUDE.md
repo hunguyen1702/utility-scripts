@@ -42,8 +42,10 @@ utility-scripts-cli slack upload-file --file <path> --channel <id>
 - `bin/utility-scripts-cli` — entry script invoked by the shim at `~/.local/bin/utility-scripts-cli`. Imports `utility_scripts_cli.cli.main`.
 - `utility_scripts_cli/cli.py` — top-level dispatcher: parses `<group> <verb> [args...]` and routes to the right command module.
 - `utility_scripts_cli/env.py` — XDG-aware `.env` loader for installed users.
+- `utility_scripts_cli/commands/slack_post_message.py` — Slack `chat.postMessage` helper for plain text or Block Kit messages.
 - `utility_scripts_cli/commands/slack_upload_file.py` — Slack 2-step external upload (file upload; the verb `upload-image` is a backcompat alias).
 - `install.sh` — POSIX sh installer; downloads the package + `requirements.txt` from raw GitHub, creates a venv at `~/.local/share/utility-scripts-cli/venv`, and writes the shim at `~/.local/bin/utility-scripts-cli`.
+  Keep its fetch/copy list aligned with `utility_scripts_cli/cli.py` imports. A missing command module in the installed layout can break startup before argument parsing, including `utility-scripts-cli --help`.
 - `uninstall.sh` / `install.sh --uninstall` — remove the shim and the share dir.
 - `mise.toml` — toolchain pin and task runner entrypoints.
 
